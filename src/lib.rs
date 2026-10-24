@@ -13,16 +13,26 @@
 //! }).unwrap();
 //! ```
 
+mod buckets;
+mod cdn;
 mod client;
+mod data;
 mod error;
 mod objects;
 mod types;
 mod utils;
 
+pub use buckets::BucketsResource;
+pub use cdn::CdnResource;
 pub use client::ClientOptions;
+pub use data::DataResource;
 pub use error::DBByteError;
 pub use objects::ObjectsResource;
 pub use types::{
+    AppendTextResponse, Bucket, BucketDeleteResponse, BucketListResponse, BucketResponse,
+    CreateBucketOptions, DataDeleteResponse, DataPage, DataQueryOptions, DataRecord,
+    DataRecordResponse, PurgeOptions, PurgeResponse, PurgeScope, UpdateBucketOptions,
+    UploadUrlOptions, UploadUrlResponse,
     DeleteResponse, DownloadResult, FileListItem, FileVersionPreview, HealthChecks,
     HealthCheckStatus, HealthDatabaseStatus, HealthResponse, ListObjectsOptions,
     ListObjectsResponse, ListVersionsOptions, ListVersionsResponse, SignOptions,
@@ -49,6 +59,27 @@ impl DBByte {
     /// list, download, delete, sign, versions).
     pub fn objects(&self) -> ObjectsResource<'_> {
         ObjectsResource {
+            client: &self.client,
+        }
+    }
+
+    /// Bucket management: list, get, create, update, delete.
+    pub fn buckets(&self) -> BucketsResource<'_> {
+        BucketsResource {
+            client: &self.client,
+        }
+    }
+
+    /// Cache purge.
+    pub fn cdn(&self) -> CdnResource<'_> {
+        CdnResource {
+            client: &self.client,
+        }
+    }
+
+    /// Serve data APIs (CSV, JSON, Google Docs).
+    pub fn data(&self) -> DataResource<'_> {
+        DataResource {
             client: &self.client,
         }
     }

@@ -6,7 +6,7 @@ use crate::error::DBByteError;
 use crate::types::{
     DeleteResponse, DownloadResult, ListObjectsOptions, ListObjectsResponse,
     ListVersionsOptions, ListVersionsResponse, SignOptions, SignedUrlResponse, UploadOptions,
-    UploadedObject,
+    UploadUrlOptions, UploadUrlResponse, UploadedObject,
 };
 use crate::utils::encode_key;
 
@@ -28,6 +28,21 @@ impl<'a> ObjectsResource<'a> {
             &opts.key,
             opts.body,
             opts.content_type.as_deref(),
+        )
+    }
+
+    /// Creates a short-lived signed upload link so a browser can upload
+    /// straight to storage without seeing your API key.
+    pub fn upload_url(
+        &self,
+        bucket: &str,
+        opts: UploadUrlOptions,
+    ) -> Result<UploadUrlResponse, DBByteError> {
+        self.client.request_json(
+            Method::POST,
+            &format!("/storage/{bucket}/upload-url"),
+            &[],
+            Some(&opts),
         )
     }
 

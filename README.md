@@ -27,6 +27,36 @@ let uploaded = dbb.objects().upload("my-bucket", UploadOptions {
 
 See `examples/basic.rs` for a fuller walkthrough (`cargo run --example basic`).
 
+## More operations
+
+```rust
+use dbbyte::*;
+
+// Buckets
+dbb.buckets().list()?;
+dbb.buckets().create(CreateBucketOptions {
+    name: "Media".into(),
+    region: "us-east".into(),
+    is_public: Some(true),
+    ..Default::default()
+})?;
+dbb.buckets().update("media", UpdateBucketOptions { versioning_enabled: Some(true), ..Default::default() })?;
+dbb.buckets().delete("media")?;
+
+// Cache purge (API key needs write permission)
+dbb.cdn().purge(PurgeOptions { slug: "media".into(), scope: PurgeScope::File, path: Some("logo.png".into()) })?;
+
+// Signed upload URL for direct browser uploads
+let link = dbb.objects().upload_url("media", UploadUrlOptions {
+    name: "photo.jpg".into(),
+    content_type: Some("image/jpeg".into()),
+    ..Default::default()
+})?;
+
+// Serve data APIs
+dbb.data().get("people", DataQueryOptions { limit: Some(20), ..Default::default() })?;
+```
+
 ## Errors
 
 Every failed request returns a `DBByteError` with `message`, `status`,
