@@ -175,3 +175,165 @@ pub struct DownloadResult {
     pub content_type: String,
     pub filename: Option<String>,
 }
+
+/// A bucket as returned by the bucket endpoints.
+#[derive(Debug, Clone, Deserialize)]
+pub struct Bucket {
+    pub id: String,
+    pub name: String,
+    pub slug: String,
+    pub region: String,
+    #[serde(rename = "replicaCount", default)]
+    pub replica_count: i64,
+    #[serde(rename = "isPublic", default)]
+    pub is_public: bool,
+    #[serde(default)]
+    pub cdn: bool,
+    #[serde(rename = "versioningEnabled", default)]
+    pub versioning_enabled: bool,
+    #[serde(rename = "fileCount", default)]
+    pub file_count: i64,
+    #[serde(default)]
+    pub size: i64,
+    #[serde(rename = "isDefault", default)]
+    pub is_default: bool,
+    #[serde(rename = "createdAt", default)]
+    pub created_at: String,
+    #[serde(rename = "updatedAt", default)]
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct BucketListResponse {
+    pub buckets: Vec<Bucket>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct BucketResponse {
+    #[serde(default)]
+    pub success: bool,
+    pub bucket: Bucket,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct BucketDeleteResponse {
+    pub success: bool,
+}
+
+/// Options for [`crate::BucketsResource::create`].
+#[derive(Debug, Clone, Default, Serialize)]
+pub struct CreateBucketOptions {
+    pub name: String,
+    pub region: String,
+    #[serde(rename = "replicaCount", skip_serializing_if = "Option::is_none")]
+    pub replica_count: Option<u32>,
+    #[serde(rename = "isPublic", skip_serializing_if = "Option::is_none")]
+    pub is_public: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cdn: Option<bool>,
+}
+
+/// Options for [`crate::BucketsResource::update`]. `None` leaves a setting unchanged.
+#[derive(Debug, Clone, Default, Serialize)]
+pub struct UpdateBucketOptions {
+    #[serde(rename = "versioningEnabled", skip_serializing_if = "Option::is_none")]
+    pub versioning_enabled: Option<bool>,
+    #[serde(rename = "isPublic", skip_serializing_if = "Option::is_none")]
+    pub is_public: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cdn: Option<bool>,
+}
+
+/// Selects a single-file or whole-bucket cache purge.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum PurgeScope {
+    File,
+    Bucket,
+}
+
+/// Options for [`crate::CdnResource::purge`]. `path` is required for file purges.
+#[derive(Debug, Clone, Serialize)]
+pub struct PurgeOptions {
+    pub slug: String,
+    pub scope: PurgeScope,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub path: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct PurgeResponse {
+    pub success: bool,
+    #[serde(default)]
+    pub purged: i64,
+    #[serde(default)]
+    pub failed: Vec<String>,
+}
+
+/// A record in a Serve data API.
+pub type DataRecord = serde_json::Map<String, serde_json::Value>;
+
+/// Options for [`crate::DataResource::get`]. Filters are exact string matches.
+#[derive(Debug, Clone, Default)]
+pub struct DataQueryOptions {
+    pub fields: Vec<String>,
+    pub cursor: Option<String>,
+    pub limit: Option<u32>,
+    pub filters: Vec<(String, String)>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct DataPage {
+    pub data: Vec<DataRecord>,
+    #[serde(default)]
+    pub next_cursor: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct DataRecordResponse {
+    pub data: DataRecord,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct AppendTextResponse {
+    pub success: bool,
+    #[serde(rename = "appendedCharacters", default)]
+    pub appended_characters: i64,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct DataDeleteResponse {
+    pub success: bool,
+}
+
+/// Options for [`crate::ObjectsResource::upload_url`].
+#[derive(Debug, Clone, Default, Serialize)]
+pub struct UploadUrlOptions {
+    /// Object name the upload will create (required, flat, no slashes).
+    pub name: String,
+    #[serde(rename = "contentType", skip_serializing_if = "Option::is_none")]
+    pub content_type: Option<String>,
+    /// Maximum bytes the link accepts (up to 50 MB).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub size: Option<u64>,
+    #[serde(skip_serializing_if = "is_false")]
+    pub overwrite: bool,
+    #[serde(rename = "expiresIn", skip_serializing_if = "Option::is_none")]
+    pub expires_in: Option<u32>,
+}
+
+fn is_false(b: &bool) -> bool {
+    !*b
+}
+
+/// A short-lived direct-upload link. Send `method` to `url` with `headers`
+/// and the file bytes as the body.
+#[derive(Debug, Clone, Deserialize)]
+pub struct UploadUrlResponse {
+    pub url: String,
+    pub method: String,
+    #[serde(default)]
+    pub headers: std::collections::HashMap<String, String>,
+    #[serde(rename = "expiresIn", default)]
+    pub expires_in: u32,
+}
